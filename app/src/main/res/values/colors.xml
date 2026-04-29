@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cores Principais - Tema Vermelho da Computaria -->
+    <color name="red_primary">#D32F2F</color> <!-- Vermelho Principal -->
+    <color name="red_dark">#9A0007</color> <!-- Vermelho Escuro -->
+    <color name="red_light">#FF6659</color> <!-- Vermelho Claro -->
+
+    <!-- Cores de Fundo (Dark Mode forçado) -->
+    <color name="background_dark">#121212</color>
+    <color name="surface_dark">#1E1E1E</color>
+
+    <!-- Cores de Texto -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3FFFFFF</color>
+
+    <!-- Outras cores básicas -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

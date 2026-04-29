@@ -1,0 +1,18 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.SorteioFUT" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Personalizando as cores -->
+        <item name="colorPrimary">@color/red_primary</item>
+        <item name="colorPrimaryVariant">@color/red_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <!-- Fundo e Superfícies -->
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="colorSurface">@color/surface_dark</item>
+
+        <!-- Status bar cor -->
+        <item name="android:statusBarColor">@color/red_dark</item>
+    </style>
+
+    <style name="Theme.SorteioFUT" parent="Base.Theme.SorteioFUT" />
+</resources>
