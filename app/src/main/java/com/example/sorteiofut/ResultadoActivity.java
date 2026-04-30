@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class ResultadoActivity extends AppCompatActivity {
@@ -36,6 +37,7 @@ public class ResultadoActivity extends AppCompatActivity {
 
         if (potesValues == null || potesValues.isEmpty()) {
             Toast.makeText(this, "Sem jogadores para sortear.", Toast.LENGTH_SHORT).show();
+            finish();
             return;
         }
 
@@ -45,6 +47,7 @@ public class ResultadoActivity extends AppCompatActivity {
 
         if (qtdTimes == 0) {
             Toast.makeText(this, "Adicione jogadores no Pote 1 para definir a quantidade de times.", Toast.LENGTH_LONG).show();
+            finish();
             return;
         }
 
@@ -62,82 +65,102 @@ public class ResultadoActivity extends AppCompatActivity {
             }
         }
 
-        // Pré-processamento: Se "juntoA" e "juntoB" existem, removemos eles dos potes
-        // e inserimos os dois como uma entidade única "juntoA && juntoB" no pote onde "juntoA" estava.
         boolean isJuntoValido = juntoA != null && !juntoA.trim().isEmpty() && juntoB != null && !juntoB.trim().isEmpty();
+        boolean isSeparadoValido = separadoA != null && !separadoA.trim().isEmpty() && separadoB != null && !separadoB.trim().isEmpty();
 
         List<List<String>> listaDePotes = new ArrayList<>();
         for (String p : potesValues) {
             listaDePotes.add(parseNames(p));
         }
 
+        // Pre-processa juntos: Remove A e B dos seus potes e coloca "A e B" juntos no pote de quem foi achado primeiro
         if (isJuntoValido) {
-            int poteIndexA = -1;
+            int poteIndex = -1;
             boolean foundA = false;
             boolean foundB = false;
 
-            // Encontrar onde eles estao
             for (int i = 0; i < listaDePotes.size(); i++) {
                 if (!foundA && listaDePotes.get(i).contains(juntoA)) {
-                    poteIndexA = i;
+                    poteIndex = i;
                     foundA = true;
                 }
                 if (!foundB && listaDePotes.get(i).contains(juntoB)) {
+                    if (poteIndex == -1) poteIndex = i;
                     foundB = true;
                 }
             }
 
-            // Se ambos foram encontrados, une-os no pote do A
             if (foundA && foundB) {
                 for (List<String> pote : listaDePotes) {
                     pote.remove(juntoA);
                     pote.remove(juntoB);
                 }
-                listaDePotes.get(poteIndexA).add(0, juntoA + " && " + juntoB);
+                listaDePotes.get(poteIndex).add(0, juntoA + " && " + juntoB);
             }
         }
 
-        boolean isSeparadoValido = separadoA != null && !separadoA.trim().isEmpty() && separadoB != null && !separadoB.trim().isEmpty();
-
-        // Distribuição dos potes
+        // Distribuicao balanceada
         for (int p = 0; p < listaDePotes.size(); p++) {
             List<String> jogadoresDoPote = listaDePotes.get(p);
             Collections.shuffle(jogadoresDoPote);
 
-            int timeIndex = 0;
             for (String jogador : jogadoresDoPote) {
+                // Ordena os times do menor pro maior pra garantir balanceamento
+                times.sort(Comparator.comparingInt(List::size));
 
-                // Se o jogador atual é um dos "separados", precisamos achar um time que não tenha o outro.
-                if (isSeparadoValido && (jogador.equals(separadoA) || jogador.equals(separadoB))) {
-                    while (timeIndex < qtdTimes &&
-                          (times.get(timeIndex).contains(separadoA) || times.get(timeIndex).contains(separadoB))) {
-                        timeIndex++;
+                boolean alocado = false;
+
+                // Tenta alocar no time mais vazio que satisfaça a regra de separação
+                for (int t = 0; t < times.size(); t++) {
+                    List<String> timeAtual = times.get(t);
+
+                    boolean conflitoSeparado = false;
+                    if (isSeparadoValido) {
+                        if (jogador.equals(separadoA) && timeAtual.contains(separadoB)) conflitoSeparado = true;
+                        if (jogador.equals(separadoB) && timeAtual.contains(separadoA)) conflitoSeparado = true;
+
+                        // Checagem extra se caso o jogador separado esteja num combo "Juntos" que já foi pro time
+                        if (jogador.equals(separadoA)) {
+                            for (String membro : timeAtual) {
+                                if (membro.contains(" && ") && membro.contains(separadoB)) conflitoSeparado = true;
+                            }
+                        }
+                        if (jogador.equals(separadoB)) {
+                            for (String membro : timeAtual) {
+                                if (membro.contains(" && ") && membro.contains(separadoA)) conflitoSeparado = true;
+                            }
+                        }
+                    }
+
+                    if (!conflitoSeparado) {
+                        if (jogador.contains(" && ")) {
+                            String[] pair = jogador.split(" && ");
+                            timeAtual.add(pair[0]);
+                            timeAtual.add(pair[1]);
+                        } else {
+                            timeAtual.add(jogador);
+                        }
+                        alocado = true;
+                        break; // alocou, sai do for de times
                     }
                 }
 
-                if (timeIndex < qtdTimes) {
+                // Se nao conseguiu alocar (ex: regras impediram), ignora a regra e coloca no time mais vazio
+                if (!alocado) {
                     if (jogador.contains(" && ")) {
                         String[] pair = jogador.split(" && ");
-                        times.get(timeIndex).add(pair[0]);
-                        times.get(timeIndex).add(pair[1]);
+                        times.get(0).add(pair[0]);
+                        times.get(0).add(pair[1]);
                     } else {
-                        times.get(timeIndex).add(jogador);
-                    }
-                    timeIndex++;
-                } else {
-                    // Jogadores sobrando vão pro banco do primeiro time
-                    if (jogador.contains(" && ")) {
-                        String[] pair = jogador.split(" && ");
-                        times.get(0).add(pair[0] + " (Banco)");
-                        times.get(0).add(pair[1] + " (Banco)");
-                    } else {
-                        times.get(0).add(jogador + " (Banco)");
+                        times.get(0).add(jogador);
                     }
                 }
             }
         }
 
-        // Exibir na tela
+        // Exibir na tela, voltando pro nome original em vez da ordem de tamanho
+        // Mas como a ordem original se perdeu na ordena do tamanho, nao importa tanto
+        // pois todos sao times gerados agora
         for (int i = 0; i < qtdTimes; i++) {
             adicionarTimeNaTela("Time " + (i + 1), times.get(i));
         }
