@@ -32,29 +32,6 @@
         android:textSize="28sp"
         android:textStyle="bold" />
 
-    <!-- Configuração: Jogadores por Time -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Jogadores por Time (Linha):"
-        android:textColor="@color/text_primary"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <EditText
-        android:id="@+id/etJogadoresPorTime"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:backgroundTint="@color/red_primary"
-        android:gravity="center"
-        android:hint="Ex: 5"
-        android:inputType="number"
-        android:textColor="@color/text_primary"
-        android:textColorHint="@color/text_secondary"
-        android:textSize="18sp" />
-
     <!-- Botão de Sorteador -->
     <Button
         android:id="@+id/btnSorteador"
@@ -62,7 +39,7 @@
         android:layout_height="60dp"
         android:layout_marginTop="48dp"
         android:backgroundTint="@color/red_primary"
-        android:text="ENTRAR NO SORTEADOR"
+        android:text="SORTEADOR"
         android:textColor="@color/white"
         android:textSize="18sp"
         android:textStyle="bold" />

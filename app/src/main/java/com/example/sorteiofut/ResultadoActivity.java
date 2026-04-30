@@ -8,7 +8,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,36 +62,62 @@ public class ResultadoActivity extends AppCompatActivity {
             }
         }
 
-        // 2. Aplica as regras de Juntos e Separados (lógica simplificada)
-        // Embaralha e distribui os potes
-        for (int p = 0; p < potesValues.size(); p++) {
-            List<String> jogadoresDoPote = parseNames(potesValues.get(p));
-            Collections.shuffle(jogadoresDoPote);
+        // Pré-processamento: Se "juntoA" e "juntoB" existem, removemos eles dos potes
+        // e inserimos os dois como uma entidade única "juntoA && juntoB" no pote onde "juntoA" estava.
+        boolean isJuntoValido = juntoA != null && !juntoA.trim().isEmpty() && juntoB != null && !juntoB.trim().isEmpty();
 
-            // Tenta aplicar regras nesse pote antes de distribuir
-            if (juntoA != null && juntoB != null && !juntoA.isEmpty() && !juntoB.isEmpty()) {
-                if (jogadoresDoPote.contains(juntoA) && jogadoresDoPote.contains(juntoB)) {
-                    jogadoresDoPote.remove(juntoA);
-                    jogadoresDoPote.remove(juntoB);
-                    jogadoresDoPote.add(0, juntoA + " e " + juntoB); // Adiciona juntos na mesma vaga (simplificado para garantir no mesmo time)
+        List<List<String>> listaDePotes = new ArrayList<>();
+        for (String p : potesValues) {
+            listaDePotes.add(parseNames(p));
+        }
+
+        if (isJuntoValido) {
+            int poteIndexA = -1;
+            boolean foundA = false;
+            boolean foundB = false;
+
+            // Encontrar onde eles estao
+            for (int i = 0; i < listaDePotes.size(); i++) {
+                if (!foundA && listaDePotes.get(i).contains(juntoA)) {
+                    poteIndexA = i;
+                    foundA = true;
+                }
+                if (!foundB && listaDePotes.get(i).contains(juntoB)) {
+                    foundB = true;
                 }
             }
 
+            // Se ambos foram encontrados, une-os no pote do A
+            if (foundA && foundB) {
+                for (List<String> pote : listaDePotes) {
+                    pote.remove(juntoA);
+                    pote.remove(juntoB);
+                }
+                listaDePotes.get(poteIndexA).add(0, juntoA + " && " + juntoB);
+            }
+        }
+
+        boolean isSeparadoValido = separadoA != null && !separadoA.trim().isEmpty() && separadoB != null && !separadoB.trim().isEmpty();
+
+        // Distribuição dos potes
+        for (int p = 0; p < listaDePotes.size(); p++) {
+            List<String> jogadoresDoPote = listaDePotes.get(p);
+            Collections.shuffle(jogadoresDoPote);
+
             int timeIndex = 0;
             for (String jogador : jogadoresDoPote) {
-                // Checa separados (simplificado)
-                if (separadoA != null && separadoB != null && !separadoA.isEmpty() && !separadoB.isEmpty()) {
-                     if (jogador.equals(separadoA) || jogador.equals(separadoB)) {
-                         // Evita cair no mesmo time (se já tem o outro)
-                         while(timeIndex < qtdTimes && (times.get(timeIndex).contains(separadoA) || times.get(timeIndex).contains(separadoB))) {
-                             timeIndex++;
-                         }
-                     }
+
+                // Se o jogador atual é um dos "separados", precisamos achar um time que não tenha o outro.
+                if (isSeparadoValido && (jogador.equals(separadoA) || jogador.equals(separadoB))) {
+                    while (timeIndex < qtdTimes &&
+                          (times.get(timeIndex).contains(separadoA) || times.get(timeIndex).contains(separadoB))) {
+                        timeIndex++;
+                    }
                 }
 
                 if (timeIndex < qtdTimes) {
-                    if (jogador.contains(" e ")) {
-                        String[] pair = jogador.split(" e ");
+                    if (jogador.contains(" && ")) {
+                        String[] pair = jogador.split(" && ");
                         times.get(timeIndex).add(pair[0]);
                         times.get(timeIndex).add(pair[1]);
                     } else {
@@ -101,7 +126,13 @@ public class ResultadoActivity extends AppCompatActivity {
                     timeIndex++;
                 } else {
                     // Jogadores sobrando vão pro banco do primeiro time
-                    times.get(0).add(jogador + " (Banco)");
+                    if (jogador.contains(" && ")) {
+                        String[] pair = jogador.split(" && ");
+                        times.get(0).add(pair[0] + " (Banco)");
+                        times.get(0).add(pair[1] + " (Banco)");
+                    } else {
+                        times.get(0).add(jogador + " (Banco)");
+                    }
                 }
             }
         }
